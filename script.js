@@ -4,6 +4,7 @@ let selectedPiece = null;
 let validMoves = [];
 let hasCaptured = false;
 let vsAI = false;
+let mustContinue = false;  // Flag para forçar continuação do movimento se houver capturas adicionais
 
 // Função para criar o tabuleiro
 function createBoard() {
@@ -91,6 +92,7 @@ function movePiece(piece, targetSquare) {
         capturedPiece.parentElement.removeChild(capturedPiece);
         targetSquare.removeAttribute('data-capture');
         hasCaptured = true;
+        mustContinue = true;  // Forçar continuidade do movimento após uma captura
     }
 
     // Remove destaques e listeners de quadrados anteriores
@@ -100,17 +102,18 @@ function movePiece(piece, targetSquare) {
     });
     validMoves = [];
 
-    // Verifica se há capturas adicionais
+    // Verifica se há capturas adicionais e força o movimento contínuo
     if (hasCaptured && checkForAdditionalCapture(piece, newRow, col)) {
-        // Permanece com a mesma peça se houver capturas adicionais
         piece.classList.add('selected');
         selectedPiece = piece;
         return;
     }
 
-    // Se não houver mais capturas, passa o turno
+    // Se não houver capturas ou movimentos adicionais, passa o turno
     hasCaptured = false;
+    mustContinue = false;
     currentPlayer = currentPlayer === 'white' ? 'black' : 'white';
+
     if (vsAI && currentPlayer === 'black') {
         setTimeout(computerMove, 500); // Jogada do computador
     }
@@ -139,6 +142,13 @@ function checkForAdditionalCapture(piece, row, col) {
 
 // Função para selecionar uma peça
 function selectPiece(piece) {
+    // Se a flag mustContinue estiver ativa, forçamos o jogador a continuar com a mesma peça
+    if (mustContinue && selectedPiece !== piece) return;
+
+    // Permite mover novamente a peça que já foi movida
+    if (selectedPiece === piece && !hasCaptured) return;
+
+    // Impede a seleção de peças do adversário ou peças do AI quando está jogando
     if (piece.getAttribute('data-color') !== currentPlayer || (vsAI && currentPlayer === 'black')) return;
 
     if (selectedPiece) {
@@ -184,6 +194,7 @@ function resetGame() {
     hasCaptured = false;
     selectedPiece = null;
     validMoves = [];
+    mustContinue = false;  // Reset flag forçando o movimento contínuo
     createBoard();
     initializeGame();
 }
@@ -241,5 +252,3 @@ document.getElementById("play-vs-ai").addEventListener("click", () => {
 
 createBoard();
 initializeGame();
-
-
